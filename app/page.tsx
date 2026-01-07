@@ -3,7 +3,7 @@ import { warnOptionHasBeenMovedOutOfExperimental } from 'next/dist/server/config
 import { useState } from 'react';
 
 export default function Home() {
-  const [messages, setMessages] = useState([]);
+const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
 
   const sendMessage = async () => {
@@ -11,8 +11,37 @@ export default function Home() {
   
   // Přidej uživatelovu zprávu
   const newMessages = [...messages, { role: 'user', content: input }];
+const sendMessage = async () => {
+  if (input.trim() === '') return;
+  
+  const userMessage = { role: 'user', content: input };
+  const newMessages = [...messages, userMessage];
   setMessages(newMessages);
   setInput('');
+  setIsLoading(true);
+  
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ messages: newMessages }),
+    });
+    
+    const data = await response.json();
+    
+    const assistantMessage = { role: 'assistant', content: data.message };
+    setMessages([...newMessages, assistantMessage]);
+  } catch (error) {
+    console.error('Chyba:', error);
+    const errorMessage = { role: 'assistant', content: 'Omlouvám se, nastala chyba. Zkus to prosím znovu.' };
+    setMessages([...newMessages, errorMessage]);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
   
   try {
     // Zavolej API
